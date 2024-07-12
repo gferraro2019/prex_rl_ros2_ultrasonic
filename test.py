@@ -10,7 +10,7 @@ from geometry_msgs.msg import Twist
 
 class Env:
 
-    def __init__(self, robot, max_episode_lenght=1000, final_state=0.15):
+    def __init__(self, robot, max_episode_lenght=1000, final_state=0.65):
         self.next_state = None
         self.episode_return = 0
         self.episode_step = 0
@@ -56,6 +56,9 @@ class Env:
 
     def reset(self):
         self.state = self.robot.read_state()
+        for _ in range(10):
+            self.robot.do(1)
+
         self.episode_return = 0
         self.episode_step = 0
         self.done = False
@@ -90,7 +93,7 @@ class MyNode(Node):
     def send_message(self, msg):
         try:
             self.publisher_.publish(msg)
-            self.get_logger().info('Publishing: "%s"' % msg.data)
+            self.get_logger().info('Publishing: "%s"' % msg)
         except Exception as e:
             print(e)
 
