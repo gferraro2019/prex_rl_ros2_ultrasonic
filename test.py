@@ -5,6 +5,7 @@ from rclpy.node import Node
 
 from std_msgs.msg import String, Float32
 from sensor_msgs.msg import LaserScan
+from geometry_msgs.msg import Twist
 
 
 class Env:
@@ -27,7 +28,7 @@ class Env:
             1,
         )
         self.action_space = np.ndarray(
-            1,
+            4,
         )
         self.state = self.robot.read_state()
 
@@ -70,7 +71,7 @@ class MyNode(Node):
     def __init__(self, subscribing_topic, publishing_topic):
         super().__init__("my_node")
         self.state = np.array([0], dtype=np.float32)
-        self.publisher_ = self.create_publisher(Float32, publishing_topic, 10)
+        self.publisher_ = self.create_publisher(Twist, publishing_topic, 10)
         self.subscription = self.create_subscription(
             LaserScan, subscribing_topic, self.read_state, 10
         )
@@ -101,8 +102,17 @@ class Robot:
         print(self)
 
     def do(self, action):
-        msg = Float32()
-        msg.data = action * 1.0
+
+        msg = Twist()
+        if action == 0:  # go forward
+            msg.linear.x = 0.3
+        elif action == 1:  # go backward
+            msg.linear.x = -0.3
+        elif action == 2:  # turn left 15 degrees
+            msg.angular.z = 0.3
+        elif action == 3:  # turn right 15 degrees
+            msg.angular.z = -0.3
+
         self.node_ros.send_message(msg)
 
     def read_state(self):
