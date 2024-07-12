@@ -4,11 +4,12 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String, Float32
+from sensor_msgs.msg import LaserScan
 
 
 class Env:
 
-    def __init__(self, robot, max_episode_lenght=1000, final_state=15):
+    def __init__(self, robot, max_episode_lenght=1000, final_state=0.15):
         self.next_state = None
         self.episode_return = 0
         self.episode_step = 0
@@ -34,6 +35,7 @@ class Env:
         self.robot.do(action)
         self.next_state = self.robot.read_state()
         self.episode_step += 1
+        self.reward = 0
 
         if np.sum(self.next_state) <= self.final_state:
             self.info["reached"] = True
@@ -65,19 +67,19 @@ class Env:
 
 class MyNode(Node):
 
-    def __init__(self):
+    def __init__(self, subscribing_topic, publishing_topic):
         super().__init__("my_node")
         self.state = np.array([0], dtype=np.float32)
-        self.publisher_ = self.create_publisher(Float32, "do_action", 10)
+        self.publisher_ = self.create_publisher(Float32, publishing_topic, 10)
         self.subscription = self.create_subscription(
-            Float32, "chatter", self.read_state, 10
+            LaserScan, subscribing_topic, self.read_state, 10
         )
         self.subscription  # prevent unused variable warning
 
     def read_state(self, msg):
         try:
             # TODO translate msg in state
-            self.state[0] = msg.data
+            self.state[0] = msg.ranges[0]
             print(f"i recieved: {self.state}")
         except:
             print("state not update!")
@@ -236,10 +238,11 @@ def train_ppo(env, episodes=1000):
     return all_rewards
 
 
-# def main(args=None):
 rclpy.init()
 
-my_node = MyNode()
+my_node = MyNode(
+    subscribing_topic="demo/laser/out", publishing_topic="irobot02/cmd_vel"
+)
 robot = Robot("bot", my_node)
 env = Env(robot)
 
