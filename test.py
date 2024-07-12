@@ -81,6 +81,8 @@ class MyNode(Node):
         try:
             # TODO translate msg in state
             self.state[0] = msg.ranges[0]
+            if self.state == np.inf:
+                self.state[0] = 4
             print(f"i recieved: {self.state}")
         except:
             print("state not update!")
